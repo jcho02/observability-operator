@@ -15,7 +15,7 @@ set -e
 export OPERATOR_NAME='observability-operator'
 export REGISTRY=${REGISTRY:-'quay.io'}
 export NAMESPACE=${NAMESPACE:-'rhobs'}
-export TAG=${TAG:-'0.0.22'}
+export TAG=${TAG:-'0.0.23'}
 
 docker buildx build --push --platform "linux/amd64,linux/ppc64le" -f build/Dockerfile -t "${REGISTRY}/${NAMESPACE}/observability-operator:${TAG}" .
 make bundle-image

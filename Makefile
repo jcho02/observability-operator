@@ -199,7 +199,7 @@ bundle: $(KUSTOMIZE) $(OPERATOR_SDK) generate
 
 .PHONY: bundle-image
 bundle-image: bundle ## Build the bundle image.
-	$(CONTAINER_RUNTIME) buildx build --push --platform linux/amd64,linux/ppc64le -f bundle.Dockerfile -t quay.io/rhobs/observability-operator-bundle:0.0.23 .
+	docker buildx build --push --platform linux/amd64,linux/ppc64le -f bundle.Dockerfile -t quay.io/rhobs/observability-operator-bundle:0.0.23 .
 
 .PHONY: bundle-push
 bundle-push: ## Build the bundle image.
