@@ -136,7 +136,7 @@ build:
 
 .PHONY: operator-image
 operator-image: generate
-	$(CONTAINER_RUNTIME) build -f build/Dockerfile . -t $(OPERATOR_IMG)
+	$(CONTAINER_RUNTIME) build -f build/Dockerfile --platform linux/amd64,linux/ppc64le -t $(OPERATOR_IMG) .
 
 .PHONY: operator-push
 operator-push:
@@ -199,7 +199,7 @@ bundle: $(KUSTOMIZE) $(OPERATOR_SDK) generate
 
 .PHONY: bundle-image
 bundle-image: bundle ## Build the bundle image.
-	$(CONTAINER_RUNTIME) build -f bundle.Dockerfile -t $(BUNDLE_IMG) .
+	$(CONTAINER_RUNTIME) build -f bundle.Dockerfile --platform linux/amd64,linux/ppc64le -t $(BUNDLE_IMG) .
 
 .PHONY: bundle-push
 bundle-push: ## Build the bundle image.
@@ -306,6 +306,10 @@ kind-cluster: $(OPERATOR_SDK)
 	kubectl apply -f hack/kind/registry.yaml -n operators
 	kubectl create -k deploy/crds/kubernetes/
 	kubectl create -k deploy/dependencies
+
+#.PHONY build-tools
+#build-tools:
+
 
 .PHONY: clean
 clean: clean-tools

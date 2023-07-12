@@ -92,23 +92,23 @@ bundle_digests() {
 }
 
 build_single_arch_index_image() {
-	opm index add --build-tool docker --bundles "${REGISTRY}/${NAMESPACE}/observability-operator-bundle@${AMD64_DIGEST}" --tag "${REGISTRY}/${NAMESPACE}/observability-operator-catalog:${TAG}-amd64" --binary-image "quay.io/operator-framework/opm:v1.28.0-amd64"
-	opm index add --build-tool docker --bundles "${REGISTRY}/${NAMESPACE}/observability-operator-bundle@${POWER_DIGEST}" --tag "${REGISTRY}/${NAMESPACE}/observability-operator-catalog:${TAG}-ppc64le" --binary-image "quay.io/operator-framework/opm:v1.28.0-ppc64le"
+	opm index add --build-tool podman --bundles "${REGISTRY}/${NAMESPACE}/observability-operator-bundle@${AMD64_DIGEST}" --tag "${REGISTRY}/${NAMESPACE}/observability-operator-catalog:${TAG}-amd64" --binary-image "quay.io/operator-framework/opm:v1.28.0-amd64"
+	opm index add --build-tool podman --bundles "${REGISTRY}/${NAMESPACE}/observability-operator-bundle@${POWER_DIGEST}" --tag "${REGISTRY}/${NAMESPACE}/observability-operator-catalog:${TAG}-ppc64le" --binary-image "quay.io/operator-framework/opm:v1.28.0-ppc64le"
 }
 
 push_single_arch_index_images() {
-	docker push "${REGISTRY}/${NAMESPACE}/observability-operator-catalog:${TAG}-amd64"
-	docker push "${REGISTRY}/${NAMESPACE}/observability-operator-catalog:${TAG}-ppc64le"
+	podman push "${REGISTRY}/${NAMESPACE}/observability-operator-catalog:${TAG}-amd64"
+	podman push "${REGISTRY}/${NAMESPACE}/observability-operator-catalog:${TAG}-ppc64le"
 }
 
 build_catalog_manifest() {
-	docker manifest create --amend "${REGISTRY}/${NAMESPACE}/observability-operator-catalog:${TAG}" \
+	podman manifest create --amend "${REGISTRY}/${NAMESPACE}/observability-operator-catalog:${TAG}" \
 		"${REGISTRY}/${NAMESPACE}/observability-operator-catalog:${TAG}-amd64" \
 		"${REGISTRY}/${NAMESPACE}/observability-operator-catalog:${TAG}-ppc64le"
 }
 
 push_catalog_manifest() {
-	docker manifest push "${REGISTRY}/${NAMESPACE}/observability-operator-catalog:${TAG}"
+	podman manifest push "${REGISTRY}/${NAMESPACE}/observability-operator-catalog:${TAG}"
 }
 
 main() {
