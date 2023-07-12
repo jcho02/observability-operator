@@ -20,8 +20,8 @@ jobs:
         run: |
           sudo apt-get -y install skopeo
 
-      - name: Set up Docker Buildx
-        uses: docker/setup-buildx-action@v2
+      - name: Set up Pomdan Buildx
+        uses: podman/setup-buildx-action@v2
       
       - name: Install yq
         env:
