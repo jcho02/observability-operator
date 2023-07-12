@@ -1,6 +1,7 @@
 # Build the manager binary
-FROM --platform=$TARGETPLATFORM golang:1.20 as builder
+FROM --platform=$BUILDPLATFORM golang:1.20 as builder
 
+ARG TARGETOS
 ARG TARGETARCH
 WORKDIR /workspace
 # Copy the Go Modules manifests
@@ -15,7 +16,7 @@ COPY cmd/operator/main.go cmd/operator/main.go
 COPY pkg/ pkg/
 
 # Build
-RUN CGO_ENABLED=0 GOOS=linux GOARCH=$TARGETARCH go build -a -o manager cmd/operator/main.go
+RUN CGO_ENABLED=0 GOOS=$TARGETOS GOARCH=$TARGETARCH go build -a -o manager cmd/operator/main.go
 
 # Use distroless as minimal base image to package the manager binary
 # Refer to https://github.com/GoogleContainerTools/distroless for more details

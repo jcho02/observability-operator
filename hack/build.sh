@@ -49,13 +49,9 @@ digest() {
 	ret=$(docker inspect --format='{{index .RepoDigests 0}}' "${IMAGE}")
 }
 
-build_operator_image() {
+build_push_operator_image() {
 	make operator-image OPERATOR_IMG=${REGISTRY}/${NAMESPACE}/${OPERATOR_NAME}:${TAG}
-}
-
-push_operator_image() {
-	make operator-push OPERATOR_IMG=${REGISTRY}/${NAMESPACE}/${OPERATOR_NAME}:${TAG}
-	digest "${REGISTRY}/${NAMESPACE}/observability-operator:${TAG}" OPERATOR_DIGEST
+	digest "${REGISTRY}/${NAMESPACE}/${OPERATOR_NAME}:${TAG}" OPERATOR_DIGEST
 	# need exporting so that yq can see them
 	export OPERATOR_DIGEST
 }
@@ -112,8 +108,7 @@ push_catalog_manifest() {
 }
 
 main() {
-	build_operator_image
-	push_operator_image
+	build_push_operator_image
 	prepare_operator_files
 	build_bundle_image
 	bundle_digests
@@ -121,7 +116,6 @@ main() {
 	push_single_arch_index_images
 	build_catalog_manifest
 	push_catalog_manifest
-	echo $1
 	return $?
 }
 

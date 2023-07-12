@@ -136,7 +136,7 @@ build:
 
 .PHONY: operator-image
 operator-image: generate
-	$(CONTAINER_RUNTIME) build -f build/Dockerfile --platform linux/amd64,linux/ppc64le -t $(OPERATOR_IMG) .
+	docker buildx build --push -f build/Dockerfile --platform linux/amd64,linux/ppc64le -t $(OPERATOR_IMG) .
 
 .PHONY: operator-push
 operator-push:
