@@ -1,0 +1,47 @@
+name: build-and-publish
+
+on:
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: 'Image tag. Defaults to 0.0.23'
+        required: false 
+jobs:
+  build-and-publish:
+    name: Build and Publish
+    runs-on: ubuntu-latest
+    env:
+      TAG: ${{ github.event.inputs.tag || '0.0.23' }}
+    steps:
+      - name: Check out code
+        uses: actions/checkout@v2
+
+      - name: Install opm from OpenShift Mirror
+        uses: redhat-actions/openshift-tools-installer@v1
+        with:
+          opm: "latest"
+
+      - name: Install skopeo
+        run: |
+          sudo apt-get -y install skopeo
+      
+      - name: Install yq
+        env:
+          VERSION: v4.14.2
+          BINARY: yq_linux_amd64
+        run: |
+          wget https://github.com/mikefarah/yq/releases/download/${VERSION}/${BINARY} -O /usr/local/bin/yq
+          chmod +x /usr/local/bin/yq
+      
+      - name: Install jq
+        run: sudo apt-get install jq
+
+      - name: Login to Quay.io
+        uses: redhat-actions/podman-login@v1
+        with:
+          registry: quay.io
+          username: ${{ secrets.QUAY_USER }}
+          password: ${{ secrets.QUAY_TOKEN }}
+
+      - id: build-and-publish
+        run: ./hack/build.sh ${{ env.TAG }}
