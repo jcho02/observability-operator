@@ -46,7 +46,7 @@ digest() {
 	IMAGE=$1
 	podman pull "${IMAGE}"
 	# shellcheck disable=SC2034
-	ret=$(docker inspect --format='{{index .RepoDigests 0}}' "${IMAGE}")
+	ret=$(podman inspect --format='{{index .RepoDigests 0}}' "${IMAGE}")
 }
 
 build_push_operator_image() {
@@ -81,15 +81,15 @@ build_bundle_image() {
 }
 
 bundle_digests() {
-	AMD64_DIGEST=$(skopeo inspect --raw  docker://${REGISTRY}/${NAMESPACE}/observability-operator-bundle:${TAG} | \
+	AMD64_DIGEST=$(skopeo inspect --raw  docker://${REGISTRY}/${NAMESPACE}/${OPERATOR_NAME}-bundle:${TAG} | \
                jq -r '.manifests[] | select(.platform.architecture == "amd64" and .platform.os == "linux").digest')
-	POWER_DIGEST=$(skopeo inspect --raw  docker://${REGISTRY}/${NAMESPACE}/observability-operator-bundle:${TAG} | \
+	POWER_DIGEST=$(skopeo inspect --raw  docker://${REGISTRY}/${NAMESPACE}/${OPERATOR_NAME}-bundle:${TAG} | \
                jq -r '.manifests[] | select(.platform.architecture == "ppc64le" and .platform.os == "linux").digest')
 }
 
 build_single_arch_index_image() {
-	opm index add --build-tool podman --bundles "${REGISTRY}/${NAMESPACE}/observability-operator-bundle@${AMD64_DIGEST}" --tag "${REGISTRY}/${NAMESPACE}/observability-operator-catalog:${TAG}-amd64" --binary-image "quay.io/operator-framework/opm:v1.28.0-amd64"
-	opm index add --build-tool podman --bundles "${REGISTRY}/${NAMESPACE}/observability-operator-bundle@${POWER_DIGEST}" --tag "${REGISTRY}/${NAMESPACE}/observability-operator-catalog:${TAG}-ppc64le" --binary-image "quay.io/operator-framework/opm:v1.28.0-ppc64le"
+	opm index add --build-tool podman --bundles "${REGISTRY}/${NAMESPACE}/${OPERATOR_NAME}-bundle@${AMD64_DIGEST}" --tag "${REGISTRY}/${NAMESPACE}/${OPERATOR_NAME}-catalog:${TAG}-amd64" --binary-image "quay.io/operator-framework/opm:v1.28.0-amd64"
+	opm index add --build-tool podman --bundles "${REGISTRY}/${NAMESPACE}/${OPERATOR_NAME}-bundle@${POWER_DIGEST}" --tag "${REGISTRY}/${NAMESPACE}/${OPERATOR_NAME}-catalog:${TAG}-ppc64le" --binary-image "quay.io/operator-framework/opm:v1.28.0-ppc64le"
 }
 
 push_single_arch_index_images() {
