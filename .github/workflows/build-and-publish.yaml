@@ -1,12 +1,8 @@
 name: build-and-publish
 
-on:
+on: [push]
   workflow_dispatch:
     inputs:
-      branch:
-        description: 'the branch to prepare the release against'
-        required: true
-        default: 'master'
       tag:
         description: 'Image tag. Defaults to 0.0.23'
         required: false 
