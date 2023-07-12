@@ -112,8 +112,8 @@ push_catalog_manifest() {
 }
 
 main() {
-	#build_operator_image
-	#push_operator_image
+	build_operator_image
+	push_operator_image
 	prepare_operator_files
 	build_bundle_image
 	bundle_digests
