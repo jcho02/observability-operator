@@ -1,11 +1,12 @@
 name: build-and-publish
 
-on: [push]
-  #workflow_dispatch:
-  #  inputs:
-  #    tag:
-  #      description: 'Image tag. Defaults to 0.0.23'
-  #      required: false 
+on: 
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: 'Image tag. Defaults to 0.0.23'
+        required: false 
+        default: "0.0.23"
 jobs:
   build-and-publish:
     name: Build and Publish
