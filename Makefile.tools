@@ -208,7 +208,7 @@ $(SHELLCHECK) shellcheck: $(TOOLS_DIR)
 $(YQ) yq: $(TOOLS_DIR)
 	@{ \
 		set -ex ;\
-		[[ -f  $(SHELLCHECK) ]] && exit 0 ;\
+		[[ -f  $(YQ) ]] && exit 0 ;\
                 cd $$(mktemp -d) ;\
 		wget https://github.com/mikefarah/yq/releases/download/$(YQ_VERSION)/yq_linux_amd64 ;\
 	}
@@ -257,6 +257,8 @@ tools: $(CONTROLLER_GEN) \
 		echo  $$(basename $(GOJSONTOYAML)) $(GOJSONTOYAML_VERSION) >> $$tools_file ;\
 		echo  $$(basename $(YQ)) $(YQ_VERSION) >> $$tools_file ;\
 		echo  $$(basename $(SHELLCHECK)) $(SHELLCHECK_VERSION) >> $$tools_file ;\
+		echo  $$(basename $(JQ)) $(JQ_VERSION) ;\
+		echo  $$(basename $(SKOPEO)) $(SKOPEO_VERSION) ;\
 	}
 
 .PHONY: clean-tools
