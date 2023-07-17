@@ -307,7 +307,7 @@ kind-cluster: $(OPERATOR_SDK)
 	kubectl create -k deploy/crds/kubernetes/
 	kubectl create -k deploy/dependencies
 
-.PHONY build-tools
+.PHONY: build-tools
 build-tools:
 	sudo apt-get -y install skopeo
 	sudo apt-get install jq
