@@ -16,8 +16,8 @@ set -eu -o pipefail
 
 declare -r OPERATOR_NAME='observability-operator'
 declare -r REGISTRY=${REGISTRY:-'quay.io'}
-declare -r NAMESPACE=${NAMESPACE:-'jcho0'}
-declare -r TAG=${TAG='$@'}
+declare -r NAMESPACE=${NAMESPACE:-'rhobs'}
+declare -r TAG=${TAG=$1}
 declare -r CSV_PATH=${CSV_PATH:-'bundle/manifests/observability-operator.clusterserviceversion.yaml'}
 declare -r ANNOTATIONS_PATH=${ANNOTATIONS_PATH:-'bundle/metadata/annotations.yaml'}
 
@@ -46,16 +46,12 @@ digest() {
 	IMAGE=$1
 	podman pull "${IMAGE}"
 	# shellcheck disable=SC2034
-	ret=$(docker inspect --format='{{index .RepoDigests 0}}' "${IMAGE}")
+	ret=$(podman inspect --format='{{index .RepoDigests 0}}' "${IMAGE}")
 }
 
-#build_operator_image() {
-#	make operator-image OPERATOR_IMG=${REGISTRY}/${NAMESPACE}/${OPERATOR_NAME}:${TAG}
-#}
-
-push_operator_image() {
-#	make operator-push OPERATOR_IMG=${REGISTRY}/${NAMESPACE}/${OPERATOR_NAME}:${TAG}
-	digest "${REGISTRY}/${NAMESPACE}/observability-operator:${TAG}" OPERATOR_DIGEST
+build_push_operator_image() {
+	make operator-image OPERATOR_IMG=${REGISTRY}/${NAMESPACE}/${OPERATOR_NAME}:${TAG}
+	digest "${REGISTRY}/${NAMESPACE}/${OPERATOR_NAME}:${TAG}" OPERATOR_DIGEST
 	# need exporting so that yq can see them
 	export OPERATOR_DIGEST
 }
@@ -85,35 +81,35 @@ build_bundle_image() {
 }
 
 bundle_digests() {
-	AMD64_DIGEST=$(skopeo inspect --raw  docker://${REGISTRY}/${NAMESPACE}/observability-operator-bundle:${TAG} | \
+	AMD64_DIGEST=$(skopeo inspect --raw  docker://${REGISTRY}/${NAMESPACE}/${OPERATOR_NAME}-bundle:${TAG} | \
                jq -r '.manifests[] | select(.platform.architecture == "amd64" and .platform.os == "linux").digest')
-	POWER_DIGEST=$(skopeo inspect --raw  docker://${REGISTRY}/${NAMESPACE}/observability-operator-bundle:${TAG} | \
+	POWER_DIGEST=$(skopeo inspect --raw  docker://${REGISTRY}/${NAMESPACE}/${OPERATOR_NAME}-bundle:${TAG} | \
                jq -r '.manifests[] | select(.platform.architecture == "ppc64le" and .platform.os == "linux").digest')
 }
 
 build_single_arch_index_image() {
-	opm index add --build-tool docker --bundles "${REGISTRY}/${NAMESPACE}/observability-operator-bundle@${AMD64_DIGEST}" --tag "${REGISTRY}/${NAMESPACE}/observability-operator-catalog:${TAG}-amd64" --binary-image "quay.io/operator-framework/opm:v1.28.0-amd64"
-	opm index add --build-tool docker --bundles "${REGISTRY}/${NAMESPACE}/observability-operator-bundle@${POWER_DIGEST}" --tag "${REGISTRY}/${NAMESPACE}/observability-operator-catalog:${TAG}-ppc64le" --binary-image "quay.io/operator-framework/opm:v1.28.0-ppc64le"
+	opm index add --build-tool podman --bundles "${REGISTRY}/${NAMESPACE}/${OPERATOR_NAME}-bundle@${AMD64_DIGEST}" --tag "${REGISTRY}/${NAMESPACE}/${OPERATOR_NAME}-catalog:${TAG}-amd64" --binary-image "quay.io/operator-framework/opm:v1.28.0-amd64"
+	opm index add --build-tool podman --bundles "${REGISTRY}/${NAMESPACE}/${OPERATOR_NAME}-bundle@${POWER_DIGEST}" --tag "${REGISTRY}/${NAMESPACE}/${OPERATOR_NAME}-catalog:${TAG}-ppc64le" --binary-image "quay.io/operator-framework/opm:v1.28.0-ppc64le"
 }
 
 push_single_arch_index_images() {
-	docker push "${REGISTRY}/${NAMESPACE}/observability-operator-catalog:${TAG}-amd64"
-	docker push "${REGISTRY}/${NAMESPACE}/observability-operator-catalog:${TAG}-ppc64le"
+	podman push "${REGISTRY}/${NAMESPACE}/observability-operator-catalog:${TAG}-amd64"
+	podman push "${REGISTRY}/${NAMESPACE}/observability-operator-catalog:${TAG}-ppc64le"
 }
 
 build_catalog_manifest() {
-	docker manifest create --amend "${REGISTRY}/${NAMESPACE}/observability-operator-catalog:${TAG}" \
+	podman manifest create "observability-operator-catalog:${TAG}" \
 		"${REGISTRY}/${NAMESPACE}/observability-operator-catalog:${TAG}-amd64" \
 		"${REGISTRY}/${NAMESPACE}/observability-operator-catalog:${TAG}-ppc64le"
 }
 
 push_catalog_manifest() {
-	docker manifest push "${REGISTRY}/${NAMESPACE}/observability-operator-catalog:${TAG}"
+	podman manifest push "observability-operator-catalog:${TAG}" \
+	       	"${REGISTRY}/${NAMESPACE}/observability-operator-catalog:${TAG}"
 }
 
 main() {
-	#build_operator_image
-	push_operator_image
+	build_push_operator_image
 	prepare_operator_files
 	build_bundle_image
 	bundle_digests
@@ -121,4 +117,7 @@ main() {
 	push_single_arch_index_images
 	build_catalog_manifest
 	push_catalog_manifest
+	return $?
 }
+
+main "$@"
