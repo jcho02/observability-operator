@@ -60,7 +60,7 @@ prepare_operator_files() {
 	# prepare operator files, then build and push operator bundle and catalog
 	# index images.
 
-	yq eval -i '
+	tmp/bin/yq eval -i '
 		.metadata.name = strenv(OPERATOR_NAME) |
 		.metadata.annotations.version = strenv(TAG) |
 		.metadata.annotations.containerImage = strenv(OPERATOR_DIGEST) |
@@ -70,7 +70,7 @@ prepare_operator_files() {
 		.spec.install.spec.deployments[0].spec.template.spec.containers[0].image = strenv(OPERATOR_DIGEST)
 		' "${CSV_PATH}"
 
-	yq eval -i '
+	tmp/bin/yq eval -i '
 		.annotations."operators.operatorframework.io.bundle.channel.default.v1" = "test" |
 		.annotations."operators.operatorframework.io.bundle.channels.v1" = "test"
 		' "${ANNOTATIONS_PATH}"	
@@ -88,8 +88,8 @@ bundle_digests() {
 }
 
 build_single_arch_index_image() {
-	opm index add --build-tool podman --bundles "${REGISTRY}/${NAMESPACE}/${OPERATOR_NAME}-bundle@${AMD64_DIGEST}" --tag "${REGISTRY}/${NAMESPACE}/${OPERATOR_NAME}-catalog:${TAG}-amd64" --binary-image "quay.io/operator-framework/opm:v1.28.0-amd64"
-	opm index add --build-tool podman --bundles "${REGISTRY}/${NAMESPACE}/${OPERATOR_NAME}-bundle@${POWER_DIGEST}" --tag "${REGISTRY}/${NAMESPACE}/${OPERATOR_NAME}-catalog:${TAG}-ppc64le" --binary-image "quay.io/operator-framework/opm:v1.28.0-ppc64le"
+	tmp/bin/opm index add --build-tool podman --bundles "${REGISTRY}/${NAMESPACE}/${OPERATOR_NAME}-bundle@${AMD64_DIGEST}" --tag "${REGISTRY}/${NAMESPACE}/${OPERATOR_NAME}-catalog:${TAG}-amd64" --binary-image "quay.io/operator-framework/opm:v1.28.0-amd64"
+	tmp/bin/opm index add --build-tool podman --bundles "${REGISTRY}/${NAMESPACE}/${OPERATOR_NAME}-bundle@${POWER_DIGEST}" --tag "${REGISTRY}/${NAMESPACE}/${OPERATOR_NAME}-catalog:${TAG}-ppc64le" --binary-image "quay.io/operator-framework/opm:v1.28.0-ppc64le"
 }
 
 push_single_arch_index_images() {
