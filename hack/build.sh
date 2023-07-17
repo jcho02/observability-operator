@@ -98,13 +98,14 @@ push_single_arch_index_images() {
 }
 
 build_catalog_manifest() {
-	podman manifest create --amend "${REGISTRY}/${NAMESPACE}/observability-operator-catalog:${TAG}" \
+	podman manifest create "observability-operator-catalog:${TAG}" \
 		"${REGISTRY}/${NAMESPACE}/observability-operator-catalog:${TAG}-amd64" \
 		"${REGISTRY}/${NAMESPACE}/observability-operator-catalog:${TAG}-ppc64le"
 }
 
 push_catalog_manifest() {
-	podman manifest push "${REGISTRY}/${NAMESPACE}/observability-operator-catalog:${TAG}"
+	podman manifest push "observability-operator-catalog:${TAG}" \
+	       	"${REGISTRY}/${NAMESPACE}/observability-operator-catalog:${TAG}"
 }
 
 main() {

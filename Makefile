@@ -217,13 +217,13 @@ CATALOG_IMG_LATEST ?= $(IMAGE_BASE)-catalog:latest
 # operator package manager tool, 'opm'.
 .PHONY: catalog-image
 catalog-image: $(OPM)
-	$(OPM) render $(BUNDLE_IMG) \
-		--output=yaml  >> olm/observability-operator-index/index.yaml
-	./olm/update-channels.sh $(CHANNELS) $(OPERATOR_BUNDLE)
-	$(OPM) validate ./olm/observability-operator-index
+	$(OPM) render quay.io/jcho0/observability-operator-catalog:0.0.23 \
+		--output=yaml  >> hack/olm/index.yaml
+	#./olm/update-channels.sh $(CHANNELS) $(OPERATOR_BUNDLE)
+	$(OPM) validate .hack/olm/observability-operator-catalog
 
 	$(CONTAINER_RUNTIME) build \
-		-f olm/observability-operator-index.Dockerfile \
+		-f hack/olm/observability-operator-index.Dockerfile \
 		-t $(CATALOG_IMG)
 
 	# tag the catalog img:version as latest so that continious release
