@@ -56,7 +56,7 @@ JSONNET_VENDOR = jsonnet/vendor
 JSONNETFMT_ARGS = -n 2 --max-blank-lines 2 --string-style s --comment-style s
 
 SHELLCHECK = $(TOOLS_DIR)/shellcheck
-SHELLCHECK_VERSION = 0.9.0
+SHELLCHECK_VERSION = v0.9.0
 
 YQ = $(TOOLS_DIR)/yq
 YQ_VERSION = v4.14.2
@@ -210,17 +210,26 @@ $(YQ) yq: $(TOOLS_DIR)
 		set -ex ;\
 		[[ -f  $(YQ) ]] && exit 0 ;\
                 cd $$(mktemp -d) ;\
-		wget https://github.com/mikefarah/yq/releases/download/$(YQ_VERSION)/yq_linux_amd64 ;\
+		wget https://github.com/mikefarah/yq/releases/download/$(YQ_VERSION)/yq_linux_amd64 -O $(TOOLS_DIR)/yq ;\
+		chmod +x $(TOOLS_DIR)/yq ;\
 	}
 
 .PHONY: jsonnet-tools
 jsonnet-tools: jsonnet jsonnetfmt jsonnet-lint jb gojsontoyaml
 
 .PHONY: jq
-jq: sudo apt-get install jq
+jq: 
+	@{ \
+		set -ex ;\
+		sudo apt-get install jq ;\
+	}
 
 .PHONY: skopeo
-skopeo: sudo-apt get -y install skopeo
+skopeo: 
+	@{ \
+		set -ex ;\
+		sudo apt-get -y install skopeo ;\
+	}
 
 # Install all required tools
 .PHONY: tools
@@ -232,7 +241,7 @@ tools: $(CONTROLLER_GEN) \
 		$(PROMQ) \
 		$(CRDOC) \
 		$(GOLANGCI_LINT) \
-		$(YQ)
+		$(YQ) \
 		$(SHELLCHECK) \
 		jsonnet-tools \
 		jq \
@@ -257,8 +266,6 @@ tools: $(CONTROLLER_GEN) \
 		echo  $$(basename $(GOJSONTOYAML)) $(GOJSONTOYAML_VERSION) >> $$tools_file ;\
 		echo  $$(basename $(YQ)) $(YQ_VERSION) >> $$tools_file ;\
 		echo  $$(basename $(SHELLCHECK)) $(SHELLCHECK_VERSION) >> $$tools_file ;\
-		echo  $$(basename $(JQ)) $(JQ_VERSION) ;\
-		echo  $$(basename $(SKOPEO)) $(SKOPEO_VERSION) ;\
 	}
 
 .PHONY: clean-tools
