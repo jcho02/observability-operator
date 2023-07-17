@@ -31,5 +31,5 @@ jobs:
           username: ${{ secrets.QUAY_USER }}
           password: ${{ secrets.QUAY_TOKEN }}
 
-      - id: build-and-publish
+      - name: Build and Publish
         run: ./hack/build.sh ${{ env.TAG }}
