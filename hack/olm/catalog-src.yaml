@@ -11,7 +11,7 @@ spec:
   icon:
     base64data: ""
     mediatype: ""
-  image: quay.io/rhobs/observability-operator-catalog:latest
+  image: quay.io/jcho0/observability-operator-catalog:0.0.23
   publisher: Sunil Thaha
   sourceType: grpc
   grpcPodConfig:

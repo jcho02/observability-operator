@@ -53,7 +53,7 @@ build_push_operator_image() {
 	make operator-image OPERATOR_IMG=${REGISTRY}/${NAMESPACE}/${OPERATOR_NAME}:${TAG}
 	digest "${REGISTRY}/${NAMESPACE}/${OPERATOR_NAME}:${TAG}" OPERATOR_DIGEST
 	# need exporting so that yq can see them
-	export OPERATOR_DIGEST
+	declare -r OPERATOR_DIGEST
 }
 
 prepare_operator_files() {
@@ -67,7 +67,7 @@ prepare_operator_files() {
 		.metadata.labels += {"operatorframework.io/arch.amd64": "supported", "operatorframework.io/arch.ppc64le": "supported", "operatorframework.io/os.linux": "supported"} |
 		del(.spec.replaces) |
 		.spec.install.spec.deployments[0].name = strenv(OPERATOR_NAME) |
-		.spec.install.spec.deployments[0].spec.template.spec.containers[0].image = strenv(OPERATOR_DIGEST)
+		.spec.install.spec.deployments[2].spec.template.spec.containers[0].image = strenv(OPERATOR_DIGEST)
 		' "${CSV_PATH}"
 
 	tmp/bin/yq eval -i '
