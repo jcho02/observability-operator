@@ -197,9 +197,9 @@ $(SHELLCHECK) shellcheck: $(TOOLS_DIR)
 		set -ex ;\
 		[[ -f $(SHELLCHECK) ]] && exit 0 ;\
 		cd $$(mktemp -d) ;\
-		curl -sSLo shellcheck-stable.tar.xz "https://github.com/koalaman/shellcheck/releases/download/v0.9.0/shellcheck-v0.9.0.linux.x86_64.tar.xz" ;\
+		curl -sSLo shellcheck-stable.tar.xz "https://github.com/koalaman/shellcheck/releases/download/$(SHELLCHECK_VERSION)/shellcheck-$(SHELLCHECK_VERSION).linux.x86_64.tar.xz" ;\
 		tar -xJf shellcheck-stable.tar.xz ;\
-		cp shellcheck-v0.9.0/shellcheck $(SHELLCHECK) ;\
+		cp shellcheck-$(SHELLCHECK_VERSION)/shellcheck $(SHELLCHECK) ;\
 		version=$(SHELLCHECK_VERSION) ;\
 		$(SHELLCHECK) -V | grep -q $${version##v} ;\
 	}
