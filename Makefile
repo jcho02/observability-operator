@@ -136,7 +136,9 @@ build:
 
 .PHONY: operator-image
 operator-image: generate
-	docker buildx build --push -f build/Dockerfile --platform linux/amd64,linux/ppc64le -t $(OPERATOR_IMG) .
+	$(CONTAINER_RUNTIME) build -f build/Dockerfile --platform linux/amd64 -t $(OPERATOR_IMG)-amd64 .
+	$(CONTAINER_RUNTIME) build -f build/Dockerfile --platform linux/ppc64le -t $(OPERATOR_IMG)-ppc64le .
+	$(CONTAINER_RUNTIME) manifest create --amend $(OPERATOR_IMG)
 
 .PHONY: operator-push
 operator-push:
