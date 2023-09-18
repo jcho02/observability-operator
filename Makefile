@@ -136,13 +136,16 @@ build:
 
 .PHONY: operator-image
 operator-image: generate
-	$(CONTAINER_RUNTIME) build -f build/Dockerfile --platform linux/amd64 -t $(OPERATOR_IMG)-amd64 .
+	$(CONTAINER_RUNTIME) build -f build/Dockerfile --platform linux/amd64 -t $(OPERATOR_IMG)-amd64 --build-arg TAGRTEARCH=amd64 .
 	$(CONTAINER_RUNTIME) build -f build/Dockerfile --platform linux/ppc64le -t $(OPERATOR_IMG)-ppc64le --build-arg TARGETARCH=ppc64le .
-	$(CONTAINER_RUNTIME) manifest create --amend $(OPERATOR_IMG)
+	$(CONTAINER_RUNTIME) push ${OPERATOR_IMG}-amd64
+	$(CONTAINER_RUNTIME) push ${OPERATOR_IMG}-ppc64le
+	$(CONTAINER_RUNTIME) manifest create $(OPERATOR_IMG) 
+	$(CONTAINER_RUNTIME) manifest add $(OPERATOR_IMG) $(OPERATOR_IMG)-amd64 $(OPERATOR_IMG)-ppc64le
 
 .PHONY: operator-push
 operator-push:
-	$(CONTAINER_RUNTIME) push $(PUSH_OPTIONS) ${OPERATOR_IMG}
+	$(CONTAINER_RUNTIME) manifest push --all $(PUSH_OPTIONS) ${OPERATOR_IMG}
 
 .PHONY: osd-e2e-test-image
 osd-e2e-test-image: tools
@@ -201,11 +204,16 @@ bundle: $(KUSTOMIZE) $(OPERATOR_SDK) generate
 
 .PHONY: bundle-image
 bundle-image: bundle ## Build the bundle image.
-	$(CONTAINER_RUNTIME) build -f bundle.Dockerfile --platform linux/amd64,linux/ppc64le -t $(BUNDLE_IMG) .
+	$(CONTAINER_RUNTIME) build --no-cache -f bundle.Dockerfile --platform linux/amd64 -t $(BUNDLE_IMG)-amd64 .
+	$(CONTAINER_RUNTIME) build --no-cache -f bundle.Dockerfile --platform linux/ppc64le -t $(BUNDLE_IMG)-ppc64le .
+	$(CONTAINER_RUNTIME) push $(BUNDLE_IMG)-amd64
+	$(CONTAINER_RUNTIME) push $(BUNDLE_IMG)-ppc64le
+	$(CONTAINER_RUNTIME) manifest create $(BUNDLE_IMG) 
+	$(CONTAINER_RUNTIME) manifest add $(BUNDLE_IMG) $(BUNDLE_IMG)-amd64 $(BUNDLE_IMG)-ppc64le
 
 .PHONY: bundle-push
 bundle-push: ## Build the bundle image.
-	$(CONTAINER_RUNTIME) push $(PUSH_OPTIONS) $(BUNDLE_IMG)
+	$(CONTAINER_RUNTIME) manifest push --all $(PUSH_OPTIONS) $(BUNDLE_IMG)
 
 # The image tag given to the resulting catalog image
 CATALOG_IMG_BASE ?= $(IMAGE_BASE)-catalog
