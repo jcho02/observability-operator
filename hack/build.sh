@@ -51,45 +51,44 @@ digest() {
 
 build_push_operator_image() {
 	make operator-image OPERATOR_IMG=${REGISTRY}/${NAMESPACE}/${OPERATOR_NAME}:${TAG}
+	make operator-push OPERATOR_IMG=${REGISTRY}/${NAMESPACE}/${OPERATOR_NAME}:${TAG}
 	digest "${REGISTRY}/${NAMESPACE}/${OPERATOR_NAME}:${TAG}" OPERATOR_DIGEST
 	# need exporting so that yq can see them
-	export OPERATOR_DIGEST
+	declare -r OPERATOR_DIGEST
 }
 
 prepare_operator_files() {
 	# prepare operator files, then build and push operator bundle and catalog
 	# index images.
 
-	yq eval -i '
+	/usr/local/bin/yq eval -i '
 		.metadata.name = strenv(OPERATOR_NAME) |
 		.metadata.annotations.version = strenv(TAG) |
 		.metadata.annotations.containerImage = strenv(OPERATOR_DIGEST) |
 		.metadata.labels += {"operatorframework.io/arch.amd64": "supported", "operatorframework.io/arch.ppc64le": "supported", "operatorframework.io/os.linux": "supported"} |
 		del(.spec.replaces) |
 		.spec.install.spec.deployments[0].name = strenv(OPERATOR_NAME) |
-		.spec.install.spec.deployments[0].spec.template.spec.containers[0].image = strenv(OPERATOR_DIGEST)
+		.spec.install.spec.deployments[2].spec.template.spec.containers[0].image = strenv(OPERATOR_DIGEST)
 		' "${CSV_PATH}"
 
-	yq eval -i '
+	/usr/local/bin/yq eval -i '
 		.annotations."operators.operatorframework.io.bundle.channel.default.v1" = "test" |
 		.annotations."operators.operatorframework.io.bundle.channels.v1" = "test"
 		' "${ANNOTATIONS_PATH}"	
 }	
 
 build_bundle_image() {
-	make bundle-image BUNDLE_IMG=${REGISTRY}/${NAMESPACE}/${OPERATOR_NAME}:${TAG}
+	make bundle-image BUNDLE_IMG=${REGISTRY}/${NAMESPACE}/${OPERATOR_NAME}-bundle:${TAG}
+	make bundle-push BUNDLE_IMG=${REGISTRY}/${NAMESPACE}/${OPERATOR_NAME}-bundle:${TAG}
 }
 
-bundle_digests() {
+build_single_arch_index_image() {
 	AMD64_DIGEST=$(skopeo inspect --raw  docker://${REGISTRY}/${NAMESPACE}/${OPERATOR_NAME}-bundle:${TAG} | \
                jq -r '.manifests[] | select(.platform.architecture == "amd64" and .platform.os == "linux").digest')
 	POWER_DIGEST=$(skopeo inspect --raw  docker://${REGISTRY}/${NAMESPACE}/${OPERATOR_NAME}-bundle:${TAG} | \
                jq -r '.manifests[] | select(.platform.architecture == "ppc64le" and .platform.os == "linux").digest')
-}
-
-build_single_arch_index_image() {
-	opm index add --build-tool podman --bundles "${REGISTRY}/${NAMESPACE}/${OPERATOR_NAME}-bundle@${AMD64_DIGEST}" --tag "${REGISTRY}/${NAMESPACE}/${OPERATOR_NAME}-catalog:${TAG}-amd64" --binary-image "quay.io/operator-framework/opm:v1.28.0-amd64"
-	opm index add --build-tool podman --bundles "${REGISTRY}/${NAMESPACE}/${OPERATOR_NAME}-bundle@${POWER_DIGEST}" --tag "${REGISTRY}/${NAMESPACE}/${OPERATOR_NAME}-catalog:${TAG}-ppc64le" --binary-image "quay.io/operator-framework/opm:v1.28.0-ppc64le"
+	/usr/local/bin/opm index add --build-tool podman --bundles "${REGISTRY}/${NAMESPACE}/${OPERATOR_NAME}-bundle@${AMD64_DIGEST}" --tag "${REGISTRY}/${NAMESPACE}/${OPERATOR_NAME}-catalog:${TAG}-amd64" --binary-image "quay.io/operator-framework/opm:v1.28.0-amd64"
+	/usr/local/bin/opm index add --build-tool podman --bundles "${REGISTRY}/${NAMESPACE}/${OPERATOR_NAME}-bundle@${POWER_DIGEST}" --tag "${REGISTRY}/${NAMESPACE}/${OPERATOR_NAME}-catalog:${TAG}-ppc64le" --binary-image "quay.io/operator-framework/opm:v1.28.0-ppc64le"
 }
 
 push_single_arch_index_images() {
@@ -112,7 +111,6 @@ main() {
 	build_push_operator_image
 	prepare_operator_files
 	build_bundle_image
-	bundle_digests
 	build_single_arch_index_image
 	push_single_arch_index_images
 	build_catalog_manifest
