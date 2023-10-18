@@ -18,6 +18,7 @@ declare -r OPERATOR_NAME='observability-operator'
 declare -r REGISTRY=${REGISTRY:-'quay.io'}
 declare -r NAMESPACE=${NAMESPACE:-'rhobs'}
 declare -r TAG=${TAG=$1}
+declare -r CONTAINER_RUNTIME=$(shell command -v podman 2> /dev/null || echo docker)
 declare -r CSV_PATH=${CSV_PATH:-'bundle/manifests/observability-operator.clusterserviceversion.yaml'}
 declare -r ANNOTATIONS_PATH=${ANNOTATIONS_PATH:-'bundle/metadata/annotations.yaml'}
 
@@ -44,7 +45,7 @@ error() {
 digest() {
 	local -n ret=$2
 	IMAGE=$1
-	podman pull "${IMAGE}"
+	${CONTAINER_RUNTIME} pull "${IMAGE}"
 	# shellcheck disable=SC2034
 	ret=$(podman inspect --format='{{index .RepoDigests 0}}' "${IMAGE}")
 }
@@ -87,23 +88,23 @@ build_single_arch_index_image() {
                jq -r '.manifests[] | select(.platform.architecture == "amd64" and .platform.os == "linux").digest')
 	POWER_DIGEST=$(skopeo inspect --raw  docker://${REGISTRY}/${NAMESPACE}/${OPERATOR_NAME}-bundle:${TAG} | \
                jq -r '.manifests[] | select(.platform.architecture == "ppc64le" and .platform.os == "linux").digest')
-	/usr/local/bin/opm index add --build-tool podman --bundles "${REGISTRY}/${NAMESPACE}/${OPERATOR_NAME}-bundle@${AMD64_DIGEST}" --tag "${REGISTRY}/${NAMESPACE}/${OPERATOR_NAME}-catalog:${TAG}-amd64" --binary-image "quay.io/operator-framework/opm:v1.28.0-amd64"
-	/usr/local/bin/opm index add --build-tool podman --bundles "${REGISTRY}/${NAMESPACE}/${OPERATOR_NAME}-bundle@${POWER_DIGEST}" --tag "${REGISTRY}/${NAMESPACE}/${OPERATOR_NAME}-catalog:${TAG}-ppc64le" --binary-image "quay.io/operator-framework/opm:v1.28.0-ppc64le"
+	/usr/local/bin/opm index add --build-tool ${CONTAINER_RUNTIME} --bundles "${REGISTRY}/${NAMESPACE}/${OPERATOR_NAME}-bundle@${AMD64_DIGEST}" --tag "${REGISTRY}/${NAMESPACE}/${OPERATOR_NAME}-catalog:${TAG}-amd64" --binary-image "quay.io/operator-framework/opm:v1.28.0-amd64"
+	/usr/local/bin/opm index add --build-tool ${CONTAINER_RUNTIME} --bundles "${REGISTRY}/${NAMESPACE}/${OPERATOR_NAME}-bundle@${POWER_DIGEST}" --tag "${REGISTRY}/${NAMESPACE}/${OPERATOR_NAME}-catalog:${TAG}-ppc64le" --binary-image "quay.io/operator-framework/opm:v1.28.0-ppc64le"
 }
 
 push_single_arch_index_images() {
-	podman push "${REGISTRY}/${NAMESPACE}/observability-operator-catalog:${TAG}-amd64"
-	podman push "${REGISTRY}/${NAMESPACE}/observability-operator-catalog:${TAG}-ppc64le"
+	${CONTAINER_RUNTIME} push "${REGISTRY}/${NAMESPACE}/observability-operator-catalog:${TAG}-amd64"
+	${CONTAINER_RUNTIME} "${REGISTRY}/${NAMESPACE}/observability-operator-catalog:${TAG}-ppc64le"
 }
 
 build_catalog_manifest() {
-	podman manifest create "observability-operator-catalog:${TAG}" \
+	${CONTAINER_RUNTIME} manifest create "observability-operator-catalog:${TAG}" \
 		"${REGISTRY}/${NAMESPACE}/observability-operator-catalog:${TAG}-amd64" \
 		"${REGISTRY}/${NAMESPACE}/observability-operator-catalog:${TAG}-ppc64le"
 }
 
 push_catalog_manifest() {
-	podman manifest push "observability-operator-catalog:${TAG}" \
+	${CONTAINER_RUNTIME} manifest push "observability-operator-catalog:${TAG}" \
 	       	"${REGISTRY}/${NAMESPACE}/observability-operator-catalog:${TAG}"
 }
 
