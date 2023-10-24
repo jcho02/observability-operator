@@ -47,7 +47,7 @@ digest() {
 	IMAGE=$1
 	${CONTAINER_RUNTIME} pull "${IMAGE}"
 	# shellcheck disable=SC2034
-	ret=$(podman inspect --format='{{index .RepoDigests 0}}' "${IMAGE}")
+	ret=$("${CONTAINER_RUNTIME}" inspect --format='{{index .RepoDigests 0}}' "${IMAGE}")
 }
 
 build_push_operator_image() {
